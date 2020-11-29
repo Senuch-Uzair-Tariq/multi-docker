@@ -1,0 +1,23 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t senuch/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true senuch/react-test npm test -- --coverage
+
+after_success:
+# Build images
+  - docker build -t senuch/multi-client ./client
+  - docker build -t senuch/multi-nginx ./nginx
+  - docker build -t senuch/multi-server ./server
+  - docker build -t senuch/multi-worker ./worker
+# Login to Docker
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+# Push build images to docker
+  - docker push senuch/multi-client
+  - docker push senuch/multi-nginx
+  - docker push senuch/multi-server
+  - docker push senuch/multi-worker
