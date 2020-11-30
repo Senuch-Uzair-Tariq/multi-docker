@@ -9,15 +9,26 @@ script:
   - docker run -e CI=true senuch/react-test npm test -- --coverage
 
 after_success:
-# Build images
+  # Build images
   - docker build -t senuch/multi-client ./client
   - docker build -t senuch/multi-nginx ./nginx
   - docker build -t senuch/multi-server ./server
   - docker build -t senuch/multi-worker ./worker
-# Login to Docker
+  # Login to Docker
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
-# Push build images to docker
+  # Push build images to docker
   - docker push senuch/multi-client
   - docker push senuch/multi-nginx
   - docker push senuch/multi-server
   - docker push senuch/multi-worker
+deploy:
+  provider: elasticbeanstalk
+  region: "eu-central-1"
+  app: "multi-docker"
+  env: "MultiDocker-env"
+  bucket_name: "elasticbeanstalk-eu-central-1-250764893382"
+  bucket_path: "multi-docker"
+  on:
+    branch: main
+  access_key_id: $AWS_ACCESS_KEY
+  secret_access_key: $AWS_SECRET_KEY
